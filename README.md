@@ -8,6 +8,8 @@ This is built for your own phone with explicit permission screens. It is not a h
 
 - Voice chat from the app screen.
 - Wake phrase while listening: `hi javris`, `hi jarvis`, or `hey jarvis`.
+- Professional assistant chat UI with left/right message bubbles and a live mode badge.
+- Warmer human-style voice responses with a casual but capable tone.
 - Two control levels:
   - Light mode: chat, writing, direct commands, and safe autopilot.
   - Advanced Owner Mode: one-command maximum permission-based automation.

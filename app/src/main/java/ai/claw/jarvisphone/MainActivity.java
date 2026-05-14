@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -44,9 +45,13 @@ public final class MainActivity extends Activity {
 
     private final int colorBg = Color.rgb(7, 16, 22);
     private final int colorPanel = Color.rgb(17, 28, 34);
+    private final int colorPanelAlt = Color.rgb(14, 22, 28);
     private final int colorText = Color.rgb(245, 250, 252);
     private final int colorMuted = Color.rgb(168, 183, 191);
     private final int colorAccent = Color.rgb(53, 209, 166);
+    private final int colorAccentDeep = Color.rgb(24, 96, 84);
+    private final int colorAssistantBubble = Color.rgb(21, 33, 41);
+    private final int colorUserBubble = Color.rgb(28, 86, 80);
     private final int colorLine = Color.rgb(34, 51, 59);
 
     private JarvisPrefs prefs;
@@ -57,6 +62,7 @@ public final class MainActivity extends Activity {
     private LinearLayout messages;
     private ScrollView messageScroll;
     private TextView status;
+    private TextView chatMode;
     private EditText input;
     private EditText endpointInput;
     private EditText tokenInput;
@@ -107,7 +113,7 @@ public final class MainActivity extends Activity {
         TextView title = label("Claw Jarvis", 30, Typeface.BOLD, colorText);
         root.addView(title);
 
-        TextView subtitle = label("Voice chat, multilingual writing, notification replies, screen control, and safe Android autopilot.", 14, Typeface.NORMAL, colorMuted);
+        TextView subtitle = label("Professional phone AI for voice chat, writing, app control, notification replies, and owner-approved automation.", 14, Typeface.NORMAL, colorMuted);
         subtitle.setPadding(0, dp(4), 0, dp(12));
         root.addView(subtitle);
 
@@ -125,7 +131,8 @@ public final class MainActivity extends Activity {
                 return;
             }
             prefs.setAutopilotEnabled(checked);
-            addAssistant(checked ? "Autopilot is on for safe actions." : "Autopilot is off.");
+            addAssistant(checked ? "Autopilot is on. I will handle safe actions and keep sensitive steps with you." : "Autopilot is off. I will wait for direct commands.");
+            updateChatMode();
         });
         switches.addView(autopilotSwitch, weightParams());
 
@@ -155,12 +162,13 @@ public final class MainActivity extends Activity {
                 prefs.setAutopilotEnabled(true);
                 prefs.setSafeNotificationRepliesEnabled(true);
                 refreshModeSwitches();
-                addAssistant("Advanced Owner Mode is on. I will use every granted Android permission for safe automation.");
+                addAssistant("Advanced Owner Mode is on. I will use every permission you granted for safe, accurate automation.");
             } else {
                 prefs.setAutopilotEnabled(false);
                 refreshModeSwitches();
-                addAssistant("Advanced Owner Mode is off. Light mode is active.");
+                addAssistant("Advanced Owner Mode is off. I am back in light mode.");
             }
+            updateChatMode();
         });
         root.addView(ownerModeSwitch);
 
@@ -199,20 +207,42 @@ public final class MainActivity extends Activity {
             addAssistant("AI settings saved. When the endpoint is set, I will use it for advanced chat and multilingual writing.");
         }));
 
-        root.addView(sectionTitle("Chat"));
+        root.addView(sectionTitle("Assistant"));
+
+        LinearLayout chatShell = new LinearLayout(this);
+        chatShell.setOrientation(LinearLayout.VERTICAL);
+        chatShell.setPadding(dp(10), dp(10), dp(10), dp(10));
+        chatShell.setBackground(rounded(colorPanelAlt, colorLine, 14));
+
+        LinearLayout chatHeader = row();
+        chatHeader.setPadding(dp(4), 0, dp(4), dp(8));
+        LinearLayout chatTitleBlock = new LinearLayout(this);
+        chatTitleBlock.setOrientation(LinearLayout.VERTICAL);
+        TextView chatTitle = label("Jarvis AI", 17, Typeface.BOLD, colorText);
+        TextView chatSubtitle = label("Human-style assistant voice", 12, Typeface.NORMAL, colorMuted);
+        chatTitleBlock.addView(chatTitle);
+        chatTitleBlock.addView(chatSubtitle);
+        chatHeader.addView(chatTitleBlock, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
+        chatMode = label("", 12, Typeface.BOLD, colorAccent);
+        chatMode.setGravity(Gravity.CENTER);
+        chatMode.setPadding(dp(10), dp(6), dp(10), dp(6));
+        chatMode.setBackground(rounded(Color.rgb(13, 42, 38), Color.rgb(35, 122, 106), 20));
+        chatHeader.addView(chatMode);
+        chatShell.addView(chatHeader);
+
         messageScroll = new ScrollView(this);
-        messageScroll.setBackgroundColor(colorPanel);
-        messageScroll.setPadding(dp(8), dp(8), dp(8), dp(8));
+        messageScroll.setBackground(rounded(colorBg, colorLine, 12));
+        messageScroll.setPadding(dp(4), dp(8), dp(4), dp(8));
         messages = new LinearLayout(this);
         messages.setOrientation(LinearLayout.VERTICAL);
         messageScroll.addView(messages);
-        root.addView(messageScroll, new LinearLayout.LayoutParams(
+        chatShell.addView(messageScroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 dp(330)
         ));
 
         LinearLayout inputRow = row();
-        input = inputBox("Ask Jarvis to write, reply, open, type, tap...", false);
+        input = inputBox("Message Jarvis or ask it to write, open, type, reply...", false);
         input.setSingleLine(false);
         input.setMinLines(1);
         input.setMaxLines(4);
@@ -225,19 +255,23 @@ public final class MainActivity extends Activity {
             return false;
         });
         inputRow.addView(input, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
-        inputRow.addView(button("Ask", v -> submitInput()));
+        inputRow.addView(button("Send", v -> submitInput()));
         inputRow.addView(button("Mic", v -> startListening()));
-        root.addView(inputRow);
+        chatShell.addView(inputRow);
+        root.addView(chatShell);
 
         setContentView(rootScroll);
 
-        addAssistant("I am ready. Try: \"hi javris write a professional reply in Hindi\" or \"open WhatsApp\".");
+        updateChatMode();
+        addAssistant("I am ready. Talk to me normally. You can ask me to write, translate, open apps, reply to messages, or guide a task step by step.");
     }
 
     private void setupSpeech() {
         textToSpeech = new TextToSpeech(this, statusCode -> {
             if (statusCode == TextToSpeech.SUCCESS) {
                 textToSpeech.setLanguage(Locale.getDefault());
+                textToSpeech.setSpeechRate(0.92f);
+                textToSpeech.setPitch(0.98f);
             }
         });
 
@@ -304,6 +338,26 @@ public final class MainActivity extends Activity {
             }
         } finally {
             syncingModes = false;
+        }
+        updateChatMode();
+    }
+
+    private void updateChatMode() {
+        if (chatMode == null) {
+            return;
+        }
+        if (prefs.isAdvancedOwnerModeEnabled()) {
+            chatMode.setText("Owner Mode");
+            chatMode.setTextColor(colorAccent);
+            chatMode.setBackground(rounded(Color.rgb(13, 42, 38), Color.rgb(35, 122, 106), 20));
+        } else if (prefs.isAutopilotEnabled()) {
+            chatMode.setText("Autopilot");
+            chatMode.setTextColor(Color.rgb(245, 184, 75));
+            chatMode.setBackground(rounded(Color.rgb(44, 32, 15), Color.rgb(118, 84, 28), 20));
+        } else {
+            chatMode.setText("Light Mode");
+            chatMode.setTextColor(colorMuted);
+            chatMode.setBackground(rounded(Color.rgb(24, 32, 38), colorLine, 20));
         }
     }
 
@@ -422,11 +476,36 @@ public final class MainActivity extends Activity {
     }
 
     private void addMessage(String sender, String text, int senderColor) {
-        TextView view = label(sender + ": " + text, 15, Typeface.NORMAL, colorText);
-        view.setTextColor(colorText);
-        view.setPadding(dp(10), dp(8), dp(10), dp(8));
-        view.setBackgroundColor(colorPanel);
-        messages.addView(view, new LinearLayout.LayoutParams(
+        boolean fromUser = "You".equals(sender);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(fromUser ? Gravity.RIGHT : Gravity.LEFT);
+        row.setPadding(0, dp(4), 0, dp(4));
+
+        LinearLayout bubble = new LinearLayout(this);
+        bubble.setOrientation(LinearLayout.VERTICAL);
+        bubble.setPadding(dp(12), dp(9), dp(12), dp(10));
+        bubble.setBackground(rounded(fromUser ? colorUserBubble : colorAssistantBubble, fromUser ? Color.rgb(54, 143, 128) : colorLine, 14));
+
+        TextView senderView = label(sender, 11, Typeface.BOLD, fromUser ? Color.rgb(210, 252, 242) : colorAccent);
+        TextView messageView = label(text, 15, Typeface.NORMAL, colorText);
+        messageView.setPadding(0, dp(3), 0, 0);
+        bubble.addView(senderView);
+        bubble.addView(messageView);
+
+        LinearLayout.LayoutParams bubbleParams = new LinearLayout.LayoutParams(
+                (int) (getResources().getDisplayMetrics().widthPixels * 0.78f),
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        if (fromUser) {
+            bubbleParams.setMargins(dp(42), 0, dp(2), 0);
+        } else {
+            bubbleParams.setMargins(dp(2), 0, dp(42), 0);
+        }
+        row.addView(bubble, bubbleParams);
+
+        messages.addView(row, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
         ));
@@ -493,6 +572,14 @@ public final class MainActivity extends Activity {
         params.setMargins(0, dp(4), dp(6), dp(4));
         button.setLayoutParams(params);
         return button;
+    }
+
+    private GradientDrawable rounded(int fill, int stroke, int radiusDp) {
+        GradientDrawable drawable = new GradientDrawable();
+        drawable.setColor(fill);
+        drawable.setCornerRadius(dp(radiusDp));
+        drawable.setStroke(dp(1), stroke);
+        return drawable;
     }
 
     private int dp(int value) {

@@ -59,7 +59,7 @@ public final class JarvisBrain {
             prefs.setAdvancedOwnerModeEnabled(true);
             prefs.setAutopilotEnabled(true);
             prefs.setSafeNotificationRepliesEnabled(true);
-            return AgentResponse.say("Advanced Owner Mode is on. I will use every Android permission you granted for safe automation, including broader notification replies, screen typing, screen taps, app opening, and foreground background operation. I will still block lock-screen bypass, OTPs, passwords, banking, payments, account deletion, and security changes.");
+            return AgentResponse.say("Done. Advanced Owner Mode is on. I will use the permissions you granted to handle safe phone tasks more confidently, like opening apps, typing, tapping visible controls, and managing notification replies. I will still keep sensitive things with you, including OTPs, passwords, banking, payments, account deletion, lock screen access, and security settings.");
         }
         if (lower.contains("turn off your dark mode")
                 || lower.contains("turn off dark mode")
@@ -70,7 +70,7 @@ public final class JarvisBrain {
                 || lower.contains("disable owner mode")) {
             prefs.setAdvancedOwnerModeEnabled(false);
             prefs.setAutopilotEnabled(false);
-            return AgentResponse.say("Advanced Owner Mode is off. I will go back to light mode and wait for direct commands.");
+            return AgentResponse.say("Done. Advanced Owner Mode is off. I am back in light mode, so I will wait for clear commands before taking action.");
         }
         return null;
     }
@@ -81,52 +81,51 @@ public final class JarvisBrain {
 
         if (lower.contains("turn on autopilot") || lower.contains("enable autopilot")) {
             prefs.setAutopilotEnabled(true);
-            return AgentResponse.say("Autopilot is on for safe actions. I will still block sensitive tasks like payments, OTPs, passwords, banking, and account security.");
+            return AgentResponse.say("Autopilot is on. I will take care of safe actions when I am confident, and I will pause for anything sensitive.");
         }
         if (lower.contains("turn off autopilot") || lower.contains("disable autopilot")) {
             prefs.setAutopilotEnabled(false);
-            return AgentResponse.say("Autopilot is off. I will suggest actions and wait for your command.");
+            return AgentResponse.say("Autopilot is off. I will stay hands-off and wait for your direct instruction.");
         }
         if (lower.startsWith("open ")) {
             String target = text.substring(5).trim();
-            return AgentResponse.action("Opening " + target + ".", AgentResponse.ACTION_OPEN_APP, "", target, 0.8);
+            return AgentResponse.action("Sure, opening " + target + " now.", AgentResponse.ACTION_OPEN_APP, "", target, 0.8);
         }
         if (lower.startsWith("type ")) {
             String message = text.substring(5).trim();
-            return AgentResponse.action("Typing that for you.", AgentResponse.ACTION_TYPE_TEXT, message, "", 0.8);
+            return AgentResponse.action("Got it. I will type that for you.", AgentResponse.ACTION_TYPE_TEXT, message, "", 0.8);
         }
         if (lower.startsWith("tap ")) {
             String target = text.substring(4).trim();
-            return AgentResponse.action("Tapping " + target + ".", AgentResponse.ACTION_TAP_TEXT, "", target, 0.7);
+            return AgentResponse.action("Okay, I will tap " + target + ".", AgentResponse.ACTION_TAP_TEXT, "", target, 0.7);
         }
         if (lower.contains("reply to last") || lower.startsWith("reply ")) {
             String reply = text.replaceFirst("(?i)reply to last", "").replaceFirst("(?i)^reply", "").trim();
             if (reply.isEmpty()) {
                 reply = "I will get back to you soon.";
             }
-            return AgentResponse.action("Reply ready.", AgentResponse.ACTION_REPLY_NOTIFICATION, reply, "", 0.7);
+            return AgentResponse.action("I have the reply ready. Sending it now if Android exposes the reply button.", AgentResponse.ACTION_REPLY_NOTIFICATION, reply, "", 0.7);
         }
         if ("notification".equals(mode)) {
             if (AutomationPolicy.looksLikeSpam(context.notificationTitle, context.notificationText)) {
-                return AgentResponse.say("This notification looks like spam. I will keep it quiet and log it.");
+                return AgentResponse.say("That looks like spam, so I am keeping it quiet and logging it.");
             }
-            return AgentResponse.say("New notification from " + firstNonEmpty(context.notificationTitle, context.appPackage) + ": " + context.notificationText);
+            return AgentResponse.say("You have a new notification from " + firstNonEmpty(context.notificationTitle, context.appPackage) + ". " + context.notificationText);
         }
         if ("write".equals(mode) || lower.contains("write") || lower.contains("draft") || lower.contains("translate")) {
             return AgentResponse.say(localWritingDraft(text));
         }
         if (isWakePhrase(lower)) {
-            return AgentResponse.say("Yes, I am here. Tell me what you want me to do.");
+            return AgentResponse.say("I am here. Tell me what you need, and I will handle what I can.");
         }
 
-        return AgentResponse.say("I am ready. I can chat, write in any language through your AI endpoint, open apps, type text, reply to notifications, and run safe autopilot actions after you enable the permissions.");
+        return AgentResponse.say("I am with you. Ask naturally, like \"write a polite reply\", \"open WhatsApp\", or \"type this message\". For deeper writing and smarter conversation, connect the AI endpoint.");
     }
 
     private static String localWritingDraft(String prompt) {
-        return "Draft:\n\n" +
-                "I can write this for you, but for high-quality multilingual writing connect an AI endpoint in settings. " +
-                "Your request was: " + prompt + "\n\n" +
-                "Suggested command: write a friendly, clear message in Hindi/English/Arabic/Spanish/etc about your exact topic.";
+        return "I can help with that.\n\n" +
+                "Draft direction: keep it clear, natural, and respectful. Your request was: " + prompt + "\n\n" +
+                "For polished writing in any language, connect the AI endpoint. Then I can write the full message in the exact tone you want: casual, professional, emotional, short, formal, or friendly.";
     }
 
     public static boolean isWakePhrase(String text) {

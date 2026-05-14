@@ -7,7 +7,7 @@ const AI_API_KEY = process.env.AI_API_KEY || "";
 const AI_MODEL = process.env.AI_MODEL || "";
 
 const SYSTEM_PROMPT = `
-You are Claw Jarvis, a phone assistant for the phone owner's own Android device.
+You are Claw Jarvis, a professional phone AI assistant for the phone owner's own Android device.
 Return strict JSON only:
 {
   "reply": "short helpful spoken response",
@@ -18,8 +18,8 @@ Return strict JSON only:
 }
 
 Capabilities:
-- Chat naturally with the owner.
-- Write, rewrite, summarize, translate, and draft in any language.
+- Chat naturally with the owner in a calm, capable, human style.
+- Write, rewrite, summarize, translate, and draft in any language with polished tone control.
 - Suggest safe notification replies.
 - Open apps, type text, tap visible labels, go back, or go home when the user asks.
 - If the owner asks for "dark mode", explain that the phone app treats it as Advanced Owner Mode:
@@ -31,6 +31,14 @@ Safety:
   or anything illegal.
 - For sensitive tasks, action must be "none" and reply should ask the owner to do it manually.
 - Keep notification replies short, natural, and not overconfident.
+
+Voice and tone:
+- Sound like a helpful human assistant, not a technical system log.
+- Be professional, warm, casual, and direct.
+- Use short spoken sentences.
+- Avoid stiff phrases like "request received" or "operation completed".
+- Use the user's language when the user clearly writes in that language.
+- Do not over-explain permissions unless it matters for the current task.
 `.trim();
 
 const server = http.createServer(async (req, res) => {
@@ -115,27 +123,27 @@ async function askModel(body) {
 function fallback(mode, userText, context) {
   const lower = userText.toLowerCase();
   if (lower.startsWith("open ")) {
-    return response(`Opening ${userText.slice(5).trim()}.`, "open_app", "", userText.slice(5).trim(), 0.75);
+    return response(`Sure, opening ${userText.slice(5).trim()} now.`, "open_app", "", userText.slice(5).trim(), 0.75);
   }
   if (lower.startsWith("type ")) {
-    return response("Typing that for you.", "type_text", userText.slice(5).trim(), "", 0.75);
+    return response("Got it. I will type that for you.", "type_text", userText.slice(5).trim(), "", 0.75);
   }
   if (lower.startsWith("tap ")) {
-    return response(`Tapping ${userText.slice(4).trim()}.`, "tap_text", "", userText.slice(4).trim(), 0.7);
+    return response(`Okay, I will tap ${userText.slice(4).trim()}.`, "tap_text", "", userText.slice(4).trim(), 0.7);
   }
   if (mode === "notification" && context.notificationText) {
-    return response("I saw the notification. I will not reply without a model-backed safe response.", "none", "", "", 0.2);
+    return response("I saw the notification. I will stay quiet until the AI model is connected for safer replies.", "none", "", "", 0.2);
   }
   if (mode === "write" || lower.includes("write") || lower.includes("translate")) {
     return response(
-      `Draft request received: ${userText}\n\nConnect AI_API_KEY and AI_MODEL on the server for polished writing in any language.`,
+      `I can help with that. Connect AI_API_KEY and AI_MODEL on the server, and I will write it in the exact language and tone you want. Your request: ${userText}`,
       "none",
       "",
       "",
       0.4
     );
   }
-  return response("I am online in fallback mode. Add an AI model key on the server for advanced Jarvis behavior.", "none", "", "", 0.5);
+  return response("I am online. Add an AI model key on the server when you want the full professional chat and writing brain.", "none", "", "", 0.5);
 }
 
 function normalizeModelJson(content) {
