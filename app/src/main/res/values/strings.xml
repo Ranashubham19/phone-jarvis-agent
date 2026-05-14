@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Claw Jarvis</string>
+    <string name="accessibility_service_name">Claw Jarvis Screen Control</string>
+    <string name="notification_service_name">Claw Jarvis Notification Brain</string>
+    <string name="call_screening_service_name">Claw Jarvis Call Shield</string>
+    <string name="foreground_channel_name">Jarvis active service</string>
+    <string name="foreground_channel_description">Keeps Claw Jarvis active while you are away.</string>
+    <string name="foreground_notification_title">Claw Jarvis is active</string>
+    <string name="foreground_notification_text">Listening for approved commands and safe automation.</string>
+</resources>
