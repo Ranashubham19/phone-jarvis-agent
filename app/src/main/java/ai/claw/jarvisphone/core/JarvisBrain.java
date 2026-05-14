@@ -4,6 +4,8 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -138,14 +140,45 @@ public final class JarvisBrain {
         if (isWakePhrase(lower)) {
             return AgentResponse.say("I am here. Tell me what you need, and I will handle what I can.");
         }
+        if (lower.contains("your name") || lower.contains("who are you")) {
+            return AgentResponse.say("I am Claw Jarvis, your phone assistant. I can talk with you, write for you, open apps, type, tap visible controls, and help with safe phone automation.");
+        }
+        if (lower.contains("how are you")) {
+            return AgentResponse.say("I am good, and I am ready. Tell me what you want to get done.");
+        }
+        if (lower.contains("what can you do") || lower.contains("help me")) {
+            return AgentResponse.say("I can open apps, type messages, draft replies, translate text, manage safe notification replies, and listen for hi javris when Always Listening is on.");
+        }
+        if (lower.contains("time") || lower.contains("date")) {
+            return AgentResponse.say("It is " + new SimpleDateFormat("EEE, d MMM h:mm a", Locale.getDefault()).format(new Date()) + ".");
+        }
+        if (looksLikeQuestion(lower)) {
+            return AgentResponse.say(offlineQuestionReply(text));
+        }
 
-        return AgentResponse.say("I am with you. Ask naturally, like \"write a polite reply\", \"open WhatsApp\", or \"type this message\". For deeper writing and smarter conversation, connect the AI endpoint.");
+        return AgentResponse.say("I heard you. In offline mode I can handle phone commands and simple help. For full AI answers, connect the AI endpoint in settings.");
     }
 
     private static String localWritingDraft(String prompt) {
         return "I can help with that.\n\n" +
                 "Draft direction: keep it clear, natural, and respectful. Your request was: " + prompt + "\n\n" +
                 "For polished writing in any language, connect the AI endpoint. Then I can write the full message in the exact tone you want: casual, professional, emotional, short, formal, or friendly.";
+    }
+
+    private static boolean looksLikeQuestion(String text) {
+        return text.endsWith("?")
+                || text.startsWith("what ")
+                || text.startsWith("why ")
+                || text.startsWith("how ")
+                || text.startsWith("who ")
+                || text.startsWith("when ")
+                || text.startsWith("where ")
+                || text.startsWith("can ")
+                || text.startsWith("should ");
+    }
+
+    private static String offlineQuestionReply(String question) {
+        return "I do not want to fake an answer. Right now I am using my offline phone-control brain, so I can handle commands like opening apps, typing, tapping, and drafting basic text. Connect the AI endpoint and I can answer questions properly. You asked: " + question;
     }
 
     public static boolean isWakePhrase(String text) {

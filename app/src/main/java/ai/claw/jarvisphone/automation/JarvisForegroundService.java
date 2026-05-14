@@ -18,6 +18,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 
 import ai.claw.jarvisphone.MainActivity;
 import ai.claw.jarvisphone.R;
@@ -40,6 +41,7 @@ public final class JarvisForegroundService extends Service {
     private static final String CHANNEL_ID = "jarvis_active";
     private static final int NOTIFICATION_ID = 7001;
     private static final long AWAKE_WINDOW_MS = 18000L;
+    private static final String SERVICE_UTTERANCE_ID = "jarvis-service-response";
 
     private Handler mainHandler;
     private JarvisPrefs prefs;
@@ -49,6 +51,7 @@ public final class JarvisForegroundService extends Service {
 
     private boolean listening;
     private boolean destroyed;
+    private boolean resumeListeningAfterSpeech;
     private long awakeUntilMs;
 
     @Override
@@ -112,6 +115,27 @@ public final class JarvisForegroundService extends Service {
                 textToSpeech.setLanguage(Locale.getDefault());
                 textToSpeech.setSpeechRate(0.92f);
                 textToSpeech.setPitch(0.98f);
+                textToSpeech.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    @Override
+                    public void onStart(String utteranceId) {
+                    }
+
+                    @Override
+                    public void onDone(String utteranceId) {
+                        if (SERVICE_UTTERANCE_ID.equals(utteranceId) && resumeListeningAfterSpeech) {
+                            resumeListeningAfterSpeech = false;
+                            restartListening(650);
+                        }
+                    }
+
+                    @Override
+                    public void onError(String utteranceId) {
+                        if (SERVICE_UTTERANCE_ID.equals(utteranceId) && resumeListeningAfterSpeech) {
+                            resumeListeningAfterSpeech = false;
+                            restartListening(900);
+                        }
+                    }
+                });
             }
         });
     }
@@ -206,8 +230,7 @@ public final class JarvisForegroundService extends Service {
         String command = hasWakePhrase ? JarvisBrain.removeWakePhrase(spoken) : spoken;
         awakeUntilMs = System.currentTimeMillis() + AWAKE_WINDOW_MS;
         if (command.isEmpty()) {
-            speak("I am here. What should I do?");
-            restartListening(1300);
+            speakAndResume("I am here. What should I do?");
             return;
         }
 
@@ -228,9 +251,8 @@ public final class JarvisForegroundService extends Service {
             if (result != null && !result.trim().isEmpty()) {
                 spokenReply = spokenReply + " " + result;
             }
-            speak(spokenReply);
+            speakAndResume(spokenReply);
             startVisibleForeground();
-            restartListening(1600);
         });
     }
 
@@ -247,7 +269,21 @@ public final class JarvisForegroundService extends Service {
 
     private void speak(String text) {
         if (textToSpeech != null && text != null && !text.trim().isEmpty()) {
-            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, "jarvis-service-response");
+            resumeListeningAfterSpeech = false;
+            textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, SERVICE_UTTERANCE_ID);
+        }
+    }
+
+    private void speakAndResume(String text) {
+        if (textToSpeech != null && text != null && !text.trim().isEmpty()) {
+            resumeListeningAfterSpeech = true;
+            int result = textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, SERVICE_UTTERANCE_ID);
+            if (result == TextToSpeech.ERROR) {
+                resumeListeningAfterSpeech = false;
+                restartListening(1200);
+            }
+        } else {
+            restartListening(700);
         }
     }
 
