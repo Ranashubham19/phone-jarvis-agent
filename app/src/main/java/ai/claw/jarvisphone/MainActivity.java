@@ -114,7 +114,7 @@ public final class MainActivity extends Activity {
         TextView title = label("Claw Jarvis", 30, Typeface.BOLD, colorText);
         root.addView(title);
 
-        TextView subtitle = label("Professional phone AI for voice chat, writing, app control, notification replies, and owner-approved automation.", 14, Typeface.NORMAL, colorMuted);
+        TextView subtitle = label("v0.4 Wake - Professional phone AI for voice chat, writing, app control, notification replies, and owner-approved automation.", 14, Typeface.NORMAL, colorMuted);
         subtitle.setPadding(0, dp(4), 0, dp(12));
         root.addView(subtitle);
 
