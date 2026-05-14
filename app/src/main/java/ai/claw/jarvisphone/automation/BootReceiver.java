@@ -15,13 +15,17 @@ public final class BootReceiver extends BroadcastReceiver {
             return;
         }
 
-        Intent service = new Intent(context, JarvisForegroundService.class);
-        service.setAction(JarvisForegroundService.ACTION_START);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            context.startForegroundService(service);
-        } else {
-            context.startService(service);
+        try {
+            Intent service = new Intent(context, JarvisForegroundService.class);
+            service.setAction(JarvisForegroundService.ACTION_START);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(service);
+            } else {
+                context.startService(service);
+            }
+            ActionLogStore.append(context, "Boot receiver started foreground service");
+        } catch (RuntimeException error) {
+            ActionLogStore.append(context, "Boot receiver could not start service: " + error.getMessage());
         }
-        ActionLogStore.append(context, "Boot receiver started foreground service");
     }
 }

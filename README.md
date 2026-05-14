@@ -8,6 +8,7 @@ This is built for your own phone with explicit permission screens. It is not a h
 
 - Voice chat from the app screen.
 - Wake phrase while listening: `hi javris`, `hi jarvis`, or `hey jarvis`.
+- Bixby-style **Always Listening Mode** with a visible foreground notification.
 - Professional assistant chat UI with left/right message bubbles and a live mode badge.
 - Warmer human-style voice responses with a casual but capable tone.
 - Two control levels:
@@ -34,9 +35,15 @@ hi javris turn on your dark mode
 hi javris turn off your dark mode
 turn on advanced mode
 turn off advanced mode
+turn on always listening
+turn off always listening
+turn on bixby mode
+turn off bixby mode
 ```
 
 The app accepts the phrase `dark mode`, but it does **not** mean hidden control or bypassing Android security. It maps to Advanced Owner Mode.
+
+Always Listening Mode keeps a visible notification and uses the microphone permission to wait for `hi javris`. It is the closest normal Android-app version of Bixby-style wake behavior. It may use more battery, and Android can still pause it on some phones if battery restrictions are enabled.
 
 ## What Android will still block
 

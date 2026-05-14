@@ -58,8 +58,9 @@ public final class JarvisBrain {
                 || lower.contains("enable owner mode")) {
             prefs.setAdvancedOwnerModeEnabled(true);
             prefs.setAutopilotEnabled(true);
+            prefs.setAlwaysListeningEnabled(true);
             prefs.setSafeNotificationRepliesEnabled(true);
-            return AgentResponse.say("Done. Advanced Owner Mode is on. I will use the permissions you granted to handle safe phone tasks more confidently, like opening apps, typing, tapping visible controls, and managing notification replies. I will still keep sensitive things with you, including OTPs, passwords, banking, payments, account deletion, lock screen access, and security settings.");
+            return AgentResponse.say("Done. Advanced Owner Mode is on, and Always Listening is ready. Keep my notification visible, then say hi javris and tell me what you need. I will still keep sensitive things with you, including OTPs, passwords, banking, payments, account deletion, lock screen access, and security settings.");
         }
         if (lower.contains("turn off your dark mode")
                 || lower.contains("turn off dark mode")
@@ -70,7 +71,26 @@ public final class JarvisBrain {
                 || lower.contains("disable owner mode")) {
             prefs.setAdvancedOwnerModeEnabled(false);
             prefs.setAutopilotEnabled(false);
+            prefs.setAlwaysListeningEnabled(false);
             return AgentResponse.say("Done. Advanced Owner Mode is off. I am back in light mode, so I will wait for clear commands before taking action.");
+        }
+        if (lower.contains("turn on always listening")
+                || lower.contains("enable always listening")
+                || lower.contains("turn on wake word")
+                || lower.contains("enable wake word")
+                || lower.contains("turn on bixby mode")
+                || lower.contains("enable bixby mode")) {
+            prefs.setAlwaysListeningEnabled(true);
+            return AgentResponse.say("Always Listening is on. Keep the Jarvis notification visible, then say hi javris whenever you want me.");
+        }
+        if (lower.contains("turn off always listening")
+                || lower.contains("disable always listening")
+                || lower.contains("turn off wake word")
+                || lower.contains("disable wake word")
+                || lower.contains("turn off bixby mode")
+                || lower.contains("disable bixby mode")) {
+            prefs.setAlwaysListeningEnabled(false);
+            return AgentResponse.say("Always Listening is off. I will stop waiting for the wake phrase in the background.");
         }
         return null;
     }

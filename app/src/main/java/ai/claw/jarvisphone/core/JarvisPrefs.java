@@ -9,6 +9,7 @@ public final class JarvisPrefs {
     private static final String KEY_AI_TOKEN = "ai_token";
     private static final String KEY_AUTOPILOT = "autopilot";
     private static final String KEY_ADVANCED_OWNER_MODE = "advanced_owner_mode";
+    private static final String KEY_ALWAYS_LISTENING = "always_listening";
     private static final String KEY_SAFE_NOTIFICATION_REPLIES = "safe_notification_replies";
     private static final String KEY_CURRENT_PACKAGE = "current_package";
     private static final String KEY_SCREEN_TEXT = "screen_text";
@@ -49,6 +50,14 @@ public final class JarvisPrefs {
 
     public void setAdvancedOwnerModeEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_ADVANCED_OWNER_MODE, enabled).apply();
+    }
+
+    public boolean isAlwaysListeningEnabled() {
+        return prefs.getBoolean(KEY_ALWAYS_LISTENING, false);
+    }
+
+    public void setAlwaysListeningEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_ALWAYS_LISTENING, enabled).apply();
     }
 
     public boolean isSafeNotificationRepliesEnabled() {

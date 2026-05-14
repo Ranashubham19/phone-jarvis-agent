@@ -69,6 +69,7 @@ public final class MainActivity extends Activity {
     private Switch autopilotSwitch;
     private Switch safeRepliesSwitch;
     private Switch ownerModeSwitch;
+    private Switch alwaysListeningSwitch;
 
     private boolean listening;
     private boolean syncingModes;
@@ -160,17 +161,45 @@ public final class MainActivity extends Activity {
             prefs.setAdvancedOwnerModeEnabled(checked);
             if (checked) {
                 prefs.setAutopilotEnabled(true);
+                prefs.setAlwaysListeningEnabled(true);
                 prefs.setSafeNotificationRepliesEnabled(true);
                 refreshModeSwitches();
+                syncAlwaysListeningService();
                 addAssistant("Advanced Owner Mode is on. I will use every permission you granted for safe, accurate automation.");
             } else {
                 prefs.setAutopilotEnabled(false);
+                prefs.setAlwaysListeningEnabled(false);
                 refreshModeSwitches();
+                syncAlwaysListeningService();
                 addAssistant("Advanced Owner Mode is off. I am back in light mode.");
             }
             updateChatMode();
         });
         root.addView(ownerModeSwitch);
+
+        alwaysListeningSwitch = new Switch(this);
+        alwaysListeningSwitch.setText("Always Listening Wake Word");
+        alwaysListeningSwitch.setTextColor(colorText);
+        alwaysListeningSwitch.setChecked(prefs.isAlwaysListeningEnabled());
+        alwaysListeningSwitch.setOnCheckedChangeListener((button, checked) -> {
+            if (syncingModes) {
+                return;
+            }
+            if (checked && !hasAudioPermission()) {
+                prefs.setAlwaysListeningEnabled(false);
+                addAssistant("Turn on microphone permission first, then I can listen for hi javris from the background.");
+                requestCorePermissions();
+                refreshModeSwitches();
+                return;
+            }
+            prefs.setAlwaysListeningEnabled(checked);
+            syncAlwaysListeningService();
+            addAssistant(checked
+                    ? "Always Listening is on. Keep my notification visible, then say hi javris."
+                    : "Always Listening is off. I will stop waiting for the wake phrase.");
+            updateChatMode();
+        });
+        root.addView(alwaysListeningSwitch);
 
         LinearLayout permissionGrid = new LinearLayout(this);
         permissionGrid.setOrientation(LinearLayout.VERTICAL);
@@ -311,6 +340,7 @@ public final class MainActivity extends Activity {
         String mode = detectMode(text);
         brain.ask(mode, text, context, response -> {
             refreshModeSwitches();
+            syncAlwaysListeningService();
             addAssistant(response.reply);
             speak(response.reply);
             status.setText("Ready.");
@@ -336,6 +366,9 @@ public final class MainActivity extends Activity {
             if (ownerModeSwitch != null && ownerModeSwitch.isChecked() != prefs.isAdvancedOwnerModeEnabled()) {
                 ownerModeSwitch.setChecked(prefs.isAdvancedOwnerModeEnabled());
             }
+            if (alwaysListeningSwitch != null && alwaysListeningSwitch.isChecked() != prefs.isAlwaysListeningEnabled()) {
+                alwaysListeningSwitch.setChecked(prefs.isAlwaysListeningEnabled());
+            }
         } finally {
             syncingModes = false;
         }
@@ -346,10 +379,18 @@ public final class MainActivity extends Activity {
         if (chatMode == null) {
             return;
         }
-        if (prefs.isAdvancedOwnerModeEnabled()) {
+        if (prefs.isAdvancedOwnerModeEnabled() && prefs.isAlwaysListeningEnabled()) {
+            chatMode.setText("Owner + Wake");
+            chatMode.setTextColor(colorAccent);
+            chatMode.setBackground(rounded(Color.rgb(13, 42, 38), Color.rgb(35, 122, 106), 20));
+        } else if (prefs.isAdvancedOwnerModeEnabled()) {
             chatMode.setText("Owner Mode");
             chatMode.setTextColor(colorAccent);
             chatMode.setBackground(rounded(Color.rgb(13, 42, 38), Color.rgb(35, 122, 106), 20));
+        } else if (prefs.isAlwaysListeningEnabled()) {
+            chatMode.setText("Wake Ready");
+            chatMode.setTextColor(Color.rgb(154, 215, 255));
+            chatMode.setBackground(rounded(Color.rgb(12, 33, 48), Color.rgb(42, 112, 150), 20));
         } else if (prefs.isAutopilotEnabled()) {
             chatMode.setText("Autopilot");
             chatMode.setTextColor(Color.rgb(245, 184, 75));
@@ -358,6 +399,18 @@ public final class MainActivity extends Activity {
             chatMode.setText("Light Mode");
             chatMode.setTextColor(colorMuted);
             chatMode.setBackground(rounded(Color.rgb(24, 32, 38), colorLine, 20));
+        }
+    }
+
+    private void syncAlwaysListeningService() {
+        Intent intent = new Intent(this, JarvisForegroundService.class);
+        intent.setAction(prefs.isAlwaysListeningEnabled()
+                ? JarvisForegroundService.ACTION_ENABLE_LISTENING
+                : JarvisForegroundService.ACTION_DISABLE_LISTENING);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
         }
     }
 
@@ -420,6 +473,11 @@ public final class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) {
             permissions.add(permission);
         }
+    }
+
+    private boolean hasAudioPermission() {
+        return Build.VERSION.SDK_INT < Build.VERSION_CODES.M
+                || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
     }
 
     private void requestCallScreeningRole() {

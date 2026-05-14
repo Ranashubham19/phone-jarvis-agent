@@ -7,5 +7,5 @@
     <string name="foreground_channel_name">Jarvis active service</string>
     <string name="foreground_channel_description">Keeps Claw Jarvis active while you are away.</string>
     <string name="foreground_notification_title">Claw Jarvis is active</string>
-    <string name="foreground_notification_text">Listening for approved commands and safe automation.</string>
+    <string name="foreground_notification_text">Wake word is off. Open Jarvis or turn on Always Listening.</string>
 </resources>
